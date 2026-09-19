@@ -1,0 +1,13 @@
+
+
+{
+  "name": "embed",
+  "private": true,
+  "devDependencies": {
+    "@lichtblick/log": "workspace:*",
+    "@lichtblick/suite-web": "workspace:*",
+    "@lichtblick/tsconfig": "1.1.2",
+    "webpack": "5.108.3",
+    "webpack-dev-server": "5.2.6"
+  }
+}

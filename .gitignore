@@ -12,6 +12,7 @@ tmp/
 # for jest --coverage
 coverage/
 .env
+.vscode/
 
 # E2E tests
 .playwright-mcp/

@@ -10598,6 +10598,18 @@ __metadata:
   languageName: node
   linkType: hard
 
+"embed@workspace:embed":
+  version: 0.0.0-use.local
+  resolution: "embed@workspace:embed"
+  dependencies:
+    "@lichtblick/log": "workspace:*"
+    "@lichtblick/suite-web": "workspace:*"
+    "@lichtblick/tsconfig": "npm:1.1.2"
+    webpack: "npm:5.108.3"
+    webpack-dev-server: "npm:5.2.6"
+  languageName: unknown
+  linkType: soft
+
 "emittery@npm:^0.13.1":
   version: 0.13.1
   resolution: "emittery@npm:0.13.1"
