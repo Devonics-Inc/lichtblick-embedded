@@ -1,158 +1,168 @@
-<h1 align="center">Lichtblick</h1>
+<h1 align="center">Lichtblick Embed</h1>
 
 <div align="center">
-  <a href="https://github.com/lichtblick-suite/lichtblick/stargazers"><img src="https://img.shields.io/github/stars/lichtblick-suite/lichtblick" alt="Stars Badge"/></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/network/members"><img src="https://img.shields.io/github/forks/lichtblick-suite/lichtblick" alt="Forks Badge"/></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/pulls"><img src="https://img.shields.io/github/issues-pr/lichtblick-suite/lichtblick" alt="Pull Requests Badge"/></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/issues"><img src="https://img.shields.io/github/issues/lichtblick-suite/lichtblick" alt="Issues Badge"/></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/issues"><img src="https://img.shields.io/github/package-json/v/lichtblick-suite/lichtblick" alt="Versions Badge"/></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/graphs/contributors"><img alt="GitHub contributors" src="https://img.shields.io/github/contributors/lichtblick-suite/lichtblick?color=2b9348"></a>
   <a href="https://opensource.org/licenses/MPL-2.0"><img src="https://img.shields.io/badge/License-MPL_2.0-brightgreen.svg" alt="License: MPL 2.0"></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/actions/workflows/e2e-regression.yml?query=branch%3Adevelop"><img src="https://img.shields.io/github/actions/workflow/status/lichtblick-suite/lichtblick/e2e-regression.yml?branch=develop&label=E2E%20Regression%20(develop)" alt="E2E Regression (develop)"/></a>
-  <a href="https://github.com/lichtblick-suite/lichtblick/actions/workflows/e2e-regression.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/lichtblick-suite/lichtblick/e2e-regression.yml?branch=main&label=E2E%20Regression%20(main)" alt="E2E Regression (main)"/></a>
+  <img src="https://img.shields.io/badge/ROS%202-Humble-blue" alt="ROS 2 Humble">
+  <img src="https://img.shields.io/badge/MoveIt-2-orange" alt="MoveIt 2">
 
   <br />
-<p  align="center">
-Lichtblick is an integrated visualization and diagnosis tool for robotics, available in your browser or as a desktop app on Linux, Windows, and macOS.
-</p>
   <p align="center">
-    <img alt="Lichtblick screenshot" src="resources/screenshot.png">
+    A fork of <a href="https://github.com/lichtblick-suite/lichtblick">Lichtblick</a> that adds an <b>embed</b> build target:
+    a stripped-down 3D robot view you can drop into any web app as an iframe, with live MoveIt planning scene support.
   </p>
+  <!-- <p align="center"><img alt="Embed screenshot" src="resources/embed-screenshot.png"></p> -->
 </div>
 
-## :rocket: Try Lichtblick
+## :sparkles: What this fork adds
 
-**[Try Lichtblick now in your browser!](https://lichtblick-suite.github.io/lichtblick/)**
+The full Lichtblick app is still here and works as usual. On top of it, the `embed/` workspace builds a separate page that shows **only the robot's 3D view**. It has no app bar, sidebars, playback controls or data-source picker, so it can live inside another product.
 
-No installation required - experience the full power of Lichtblick directly in your web browser!
+- **Robot-only view.** A single 3D panel fills the page, with none of the application chrome.
+- **Locked preset layout.** Camera, colours, visible topics and hidden frames come from `defaultLayout.ts`. The layout is applied on every load, overriding anything stale in the browser's storage.
+- **Auto-connect.** The data source is picked from URL parameters, so the host app decides what to show and the end user never sees a picker.
+- **Live MoveIt planning scene.** The embed subscribes directly to `/monitored_planning_scene`. Collision objects appear, move, attach to the gripper, detach and disappear in real time, with no relay node needed.
+- **Late-join safe.** On connect, the embed asks move_group for the full scene through `/get_planning_scene`, so objects spawned before the page opened still show up.
+- **Nothing to install per browser.** The MoveIt converter is compiled into the bundle, so there's no `.foxe` extension to install in each browser.
 
-## :book: Documentation
+## :rocket: Quick start
 
-Looking for guidance on using Lichtblick? Check out our [official documentation here!](https://lichtblick-suite.github.io/docs/)
-
-We are actively updating our documentation with new features, stay tunned! :rocket:
-
-**Dependencies:**
-
-- [Node.js](https://nodejs.org/en/) v16.10+
-
-<hr/>
-
-## :rocket: Getting started
-
-### :whale: From Docker
-
-To run lichtblick via docker you can run:
+**Requirements:** Node.js 16.10+ with Corepack, plus the ROS 2 side described below.
 
 ```sh
-docker run --rm -p 8080:8080 ghcr.io/lichtblick-suite/lichtblick:latest
+git clone <this-repo-url>
+cd lichtblick
+corepack enable
+yarn install
+yarn embed:serve        # http://localhost:8081
 ```
 
-And open in your browser: http://localhost:8080/
+Then open the embed and point it at your robot:
 
-### 📑 From source code
+```
+http://localhost:8081/?ds=foxglove-websocket&ds.url=ws://localhost:8765
+```
 
-Clone the repository:
+### URL parameters
+
+| Parameter | Example | Purpose |
+|-----------|---------|---------|
+| `ds` | `foxglove-websocket` | Data source type |
+| `ds.url` | `ws://localhost:8765` | Address of the data source |
+
+Supported sources include `foxglove-websocket` (foxglove_bridge), `rosbridge-websocket` (rosbridge on port 9090) and `remote-file` (a URL to an `.mcap` recording).
+
+## :robot: ROS 2 side
+
+The embed expects these to be running:
 
 ```sh
-$ git clone https://github.com/lichtblick-suite/lichtblick.git
+ros2 launch <your_moveit_config> demo.launch.py              # move_group + robot_state_publisher
+ros2 launch foxglove_bridge foxglove_bridge_launch.xml     # ws://localhost:8765
 ```
 
-Enable corepack:
+| Needed | Why |
+|--------|-----|
+| `/robot_description` | Robot model (URDF) |
+| `/tf`, `/tf_static` | Robot motion, and attached objects following the gripper |
+| `/monitored_planning_scene` | Live collision object updates |
+| `/get_planning_scene` service | Initial full scene for late joiners (loaded in move_group by default) |
+
+`moveit_msgs` must be sourced in the environment where foxglove_bridge runs. Service calls must also be allowed, which is the bridge's default.
+
+### Try it
+
+Spawn a box and watch it appear in the embed:
 
 ```sh
-$ corepack enable
+ros2 topic pub --once /planning_scene moveit_msgs/msg/PlanningScene "{is_diff: true, world: {collision_objects: [{header: {frame_id: world}, id: box1, primitives: [{type: 1, dimensions: [0.2, 0.2, 0.2]}], primitive_poses: [{position: {x: 0.4, y: 0.0, z: 0.1}, orientation: {w: 1.0}}], operation: 0}]}}"
 ```
 
-Install packages from `package.json`:
+Remove it:
 
 ```sh
-$ yarn install
+ros2 topic pub --once /planning_scene moveit_msgs/msg/PlanningScene "{is_diff: true, world: {collision_objects: [{id: box1, operation: 1}]}}"
 ```
 
-- If you still get errors about corepack after running `corepack enable`, try uninstalling and reinstalling Node.js. Ensure that Yarn is not separately installed from another source, but is installed _via_ corepack.
+## :jigsaw: Embedding in your app
 
-Launch the development environment:
+The embed is a normal web page, so any frontend can host it in an iframe. In React:
+
+```tsx
+export function RobotView() {
+  return (
+    <iframe
+      title="Robot 3D view"
+      src="http://localhost:8081/?ds=foxglove-websocket&ds.url=ws://localhost:8765"
+      style={{ width: "100%", height: 480, border: 0 }}
+    ></iframe>
+  );
+}
+```
+
+For production, build the bundle and serve `embed/.webpack` from any static host:
 
 ```sh
-# To launch the desktop app (run scripts in different terminals):
-$ yarn desktop:serve        # start webpack dev server
-$ yarn desktop:start        # launch electron (make sure the desktop:serve finished to build)
-
-# To launch the web app:
-$ yarn run web:serve        # it will be avaiable in http://localhost:8080
+yarn embed:build:prod
 ```
 
-:warning: Ubuntu users: the application may present some issues using GPU. In order to bypass the GPU and process it using directly the CPU (software), please run lichtblick using the variable `LIBGL_ALWAYS_SOFTWARE` set to `1`:
+## :art: Customising the view
+
+Everything the viewer sees is set in `embed/src/defaultLayout.ts`: camera position, background colour, robot fallback colour, which topics are visible and which TF frames are hidden.
+
+The easiest way to change it is to build the view you want in the full app (`yarn web:serve`), export the layout from the Layouts menu, and paste the panel config into `defaultLayout.ts`.
+
+## :motorway: MoveIt planning scene support
+
+| Supported | Details |
+|-----------|---------|
+| Primitives | Box, sphere, cylinder, cone |
+| Meshes | Rendered as triangle lists |
+| Operations | ADD, REMOVE, APPEND, MOVE |
+| Attached objects | Drawn in the attach link's frame, so they follow the gripper |
+| Colours | From `object_colors`; attached objects are highlighted in orange |
+
+**Not rendered:** octomap and planes.
+
+The converter keeps a single shared scene, so subscribe the layout to only one PlanningScene topic.
+
+## :file_folder: Project structure
+
+```
+embed/
+├── webpack.config.ts           # Build target (dev server on :8081)
+└── src/
+    ├── entrypoint.tsx          # Boots the app; loads the preset layout first
+    ├── EmbedApp.tsx            # Provider stack (counterpart of StudioApp.tsx)
+    ├── EmbedWorkspace.tsx      # Renders only the panel layout (counterpart of Workspace.tsx)
+    ├── defaultLayout.ts        # The locked preset layout
+    ├── useEnforceLayout.ts     # Reapplies the preset after the stored layout loads
+    ├── useAutoConnect.ts       # Connects to the data source named in the URL
+    ├── useSeedPlanningScene.ts # Fetches the full MoveIt scene on connect
+    └── converters/
+        ├── index.ts                  # Registers bundled message converters
+        └── convertPlanningScene.ts   # moveit_msgs/PlanningScene -> foxglove.SceneUpdate
+```
+
+## :computer: Full Lichtblick app
+
+The upstream app is unchanged and still builds as normal:
 
 ```sh
-$ LIBGL_ALWAYS_SOFTWARE=1 yarn desktop:start
+yarn web:serve              # web app on http://localhost:8080
+yarn desktop:serve          # desktop: webpack dev server
+yarn desktop:start          # desktop: launch Electron (after desktop:serve finishes)
+yarn web:build:prod         # production web build -> web/.webpack
+yarn clean                  # remove build output
 ```
 
-## :hammer_and_wrench: Building Lichtblick
+:warning: **Ubuntu GPU issues:** if the 3D view misbehaves, run with software rendering, e.g. `LIBGL_ALWAYS_SOFTWARE=1 yarn desktop:start`.
 
-Build the application for production using these commands:
+For the full upstream instructions, Docker usage and Linux package dependencies, see the [Lichtblick README](https://github.com/lichtblick-suite/lichtblick#readme) and [documentation](https://lichtblick-suite.github.io/docs/).
 
-```sh
-# To build the desktop apps:
-$ yarn run desktop:build:prod   # compile necessary files
+## :pencil: License
 
-- yarn run package:win         # Package for windows
-- yarn run package:darwin      # Package for macOS
-- yarn run package:linux       # Package for linux
-
-# To build the web app:
-$ yarn run web:build:prod
-
-# To build and run the web app using docker:
-$ docker build . -t lichtblick
-$ docker run -p 8080:8080 lichtblick
-
-# It is possible to clean up build files using the following command:
-$ yarn run clean
-```
-
-- The desktop builds are located in the `dist` directory, and the web builds are found in the `web/.webpack` directory.
-
-## :warning: Note on Linux dependencies (.tar.gz only)
-
-When installing the **`.tar.gz` package**, unlike the `.deb`, **system dependencies are not installed automatically**.
-In many cases, if you already have **Google Chrome** or another Chromium-based application installed, Lichtblick will run fine since these applications bring most of the required libraries.
-
-However, if you see errors about missing libraries when launching Lichtblick, you will need to install them manually.
-The most common missing dependencies are:
-
-- `libgtk-3-0`
-- `libatk1.0-0`
-- `libatk-bridge2.0-0`
-- `libatspi2.0-0`
-- `libnss3`
-- `libnspr4`
-- `libasound2`
-- `libcups2`
-- `libnotify4`
-- `libxtst6`
-- `xdg-utils`
-- `libdrm2`
-- `libgbm1`
-- `libxcb-dri3-0`
-
-Example (Debian/Ubuntu):
-
-```bash
-sudo apt-get update && sudo apt-get install libgtk-3-0 libatk1.0-0 libatk-bridge2.0-0 libatspi2.0-0 libnss3 libnspr4 libasound2 libcups2 libnotify4 libxtst6 xdg-utils libdrm2 libgbm1 libxcb-dri3-0
-```
-
-👉 **Recommendation**: if using the `.tar.gz`, always check the error messages in the terminal. They will indicate which library is missing so you can install it manually.
-
-## :pencil: License (Open Source)
-
-Lichtblick follows an open core licensing model. Most functionality is available in this repository, and can be reproduced or modified per the terms of the [Mozilla Public License v2.0](/LICENSE).
-
-## :handshake: Contributing
-
-Contributions are welcome! Lichtblick is primarily built in TypeScript and ReactJS. All potential contributors must agree to the Contributor License Agreement outlined in [CONTRIBUTING.md](CONTRIBUTING.md).
+Licensed under the [Mozilla Public License v2.0](/LICENSE), the same as upstream Lichtblick. Files carrying an MPL header remain under the MPL; modified files keep their original notices.
 
 ## :star: Credits
 
-Lichtblick originally began as a fork of [Foxglove Studio](https://github.com/foxglove/studio), an open-source project developed by [Foxglove](https://foxglove.dev/).
+Built on [Lichtblick](https://github.com/lichtblick-suite/lichtblick) by BMW Group, which began as a fork of [Foxglove Studio](https://github.com/foxglove/studio) by [Foxglove](https://foxglove.dev/).
