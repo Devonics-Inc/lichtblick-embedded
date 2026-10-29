@@ -51,7 +51,7 @@ import { bundledMessageConverters } from "./converters";
 export function EmbedApp(): React.JSX.Element {
 
   // get the shared context from the root of the app, which is provided by the suite-web package
-  const { dataSources, extensionLoaders, extraProviders } = useSharedRootContext();
+  const { dataSources, extraProviders } = useSharedRootContext();
 
   // store layout in indexedDB, so that the user can customize the layout and it will be persisted across sessions
   const layoutStorage = useMemo(() => new IdbLayoutStorage(), []);
